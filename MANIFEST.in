@@ -1,0 +1,4 @@
+include ez_setup.py version.py *.txt
+include RELEASE-VERSION
+include tests/*.py
+include src/*.h
