@@ -1,1 +1,4 @@
 *.pyc
+libevent.py
+*.so
+*.pyd

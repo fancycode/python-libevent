@@ -1,9 +1,9 @@
 import errno
-import event
+import libevent
 import socket
 
 def event_ready(evt, fd, what, conn):
-    if what & event.EV_TIMEOUT:
+    if what & libevent.EV_TIMEOUT:
         # the client didn't send something for too long
         print 'Timeout'
         # close the socket...
@@ -12,7 +12,7 @@ def event_ready(evt, fd, what, conn):
         evt.base.loopbreak()
         return
         
-    if what & event.EV_READ:
+    if what & libevent.EV_READ:
         data = ''
         # get all available data
         while True:
@@ -43,7 +43,7 @@ def main():
     # the classic hello world example...
     
     # we need an event base that will hold the events
-    base = event.Base()
+    base = libevent.Base()
     print 'Initialized base with %r backend' % (base.method)
 
     # create listening socket
@@ -59,7 +59,7 @@ def main():
     print 'Connected from %s:%d' % addr
     
     # add event that waits for available data with a timeout of 5 seconds
-    evt = event.Event(base, conn.fileno(), event.EV_READ|event.EV_PERSIST, event_ready, conn)
+    evt = libevent.Event(base, conn.fileno(), libevent.EV_READ|libevent.EV_PERSIST, event_ready, conn)
     evt.add(5)
     
     # run event loop until termination
