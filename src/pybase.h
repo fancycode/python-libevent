@@ -18,8 +18,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef ___EVENT_PYBASE__H___
-#define ___EVENT_PYBASE__H___
+#ifndef ___EVENT_PYEVENTBASE__H___
+#define ___EVENT_PYEVENTBASE__H___
 
 #include <Python.h>
 #include <event2/event.h>
@@ -42,7 +42,7 @@
 #define PyLong_FromSsize_t(v) PyLong_FromLong(v)
 #endif
 
-typedef struct _PyBaseObject {
+typedef struct _PyEventBaseObject {
     PyObject_HEAD
     struct event_base *base;
     PyObject *method;
@@ -50,13 +50,13 @@ typedef struct _PyBaseObject {
     PyObject *error_type;
     PyObject *error_value;
     PyObject *error_traceback;
-} PyBaseObject;
+} PyEventBaseObject;
 
-extern PyTypeObject PyBase_Type;
+extern PyTypeObject PyEventBase_Type;
 
 extern void timeval_init(struct timeval *tv, double time);
-extern void base_store_error(PyBaseObject *self);
+extern void pybase_store_error(PyEventBaseObject *self);
 
-#define PyBase_Check(ob) ((ob)->ob_type == &PyBase_Type)
+#define PyEventBase_Check(ob) ((ob)->ob_type == &PyEventBase_Type)
 
 #endif

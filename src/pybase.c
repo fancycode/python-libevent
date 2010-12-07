@@ -34,7 +34,7 @@ timeval_init(struct timeval *tv, double time)
 }
 
 void
-base_store_error(PyBaseObject *self)
+pybase_store_error(PyEventBaseObject *self)
 {
     if (self->error_type == NULL) {
         // Store exception for later reuse and signal loop to stop
@@ -46,7 +46,7 @@ base_store_error(PyBaseObject *self)
 }
 
 static PyObject *
-base_evalute_error_response(PyBaseObject *self)
+pybase_evalute_error_response(PyEventBaseObject *self)
 {
     if (self->error_type != NULL) {
         // The loop was interrupted due to an error, re-raise
@@ -61,10 +61,10 @@ base_evalute_error_response(PyBaseObject *self)
 }
 
 static PyObject *
-base_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+pybase_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
-    PyBaseObject *s;
-    s = (PyBaseObject *)type->tp_alloc(type, 0);
+    PyEventBaseObject *s;
+    s = (PyEventBaseObject *)type->tp_alloc(type, 0);
     if (s != NULL) {
         s->base = NULL;
         s->method = NULL;
@@ -77,7 +77,7 @@ base_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 }
 
 static int
-base_init(PyBaseObject *self, PyObject *args, PyObject *kwds)
+pybase_init(PyEventBaseObject *self, PyObject *args, PyObject *kwds)
 {
     if (!PyArg_ParseTuple(args, "", args))
         return -1;
@@ -93,7 +93,7 @@ base_init(PyBaseObject *self, PyObject *args, PyObject *kwds)
 }
 
 static void
-base_dealloc(PyBaseObject *self)
+pybase_dealloc(PyEventBaseObject *self)
 {
     Py_XDECREF(self->error_type);
     Py_XDECREF(self->error_value);
@@ -107,10 +107,10 @@ base_dealloc(PyBaseObject *self)
     Py_TYPE(self)->tp_free(self);
 }
 
-PyDoc_STRVAR(base_reinit_doc, "Reinitialized the event base after a fork.");
+PyDoc_STRVAR(pybase_reinit_doc, "Reinitialized the event base after a fork.");
 
 static PyObject *
-base_reinit(PyBaseObject *self, PyObject *args)
+pybase_reinit(PyEventBaseObject *self, PyObject *args)
 {
     Py_BEGIN_ALLOW_THREADS
     event_reinit(self->base);
@@ -118,21 +118,21 @@ base_reinit(PyBaseObject *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
-PyDoc_STRVAR(base_dispatch_doc, "Threadsafe event dispatching loop.");
+PyDoc_STRVAR(pybase_dispatch_doc, "Threadsafe event dispatching loop.");
 
 static PyObject *
-base_dispatch(PyBaseObject *self, PyObject *args)
+pybase_dispatch(PyEventBaseObject *self, PyObject *args)
 {
     Py_BEGIN_ALLOW_THREADS
     event_base_dispatch(self->base);
     Py_END_ALLOW_THREADS
-    return base_evalute_error_response(self);
+    return pybase_evalute_error_response(self);
 }
 
-PyDoc_STRVAR(base_loop_doc, "Handle events (threadsafe version).");
+PyDoc_STRVAR(pybase_loop_doc, "Handle events (threadsafe version).");
 
 static PyObject *
-base_loop(PyBaseObject *self, PyObject *args)
+pybase_loop(PyEventBaseObject *self, PyObject *args)
 {
     int flags=0;
     if (!PyArg_ParseTuple(args, "|i", &flags))
@@ -141,13 +141,13 @@ base_loop(PyBaseObject *self, PyObject *args)
     Py_BEGIN_ALLOW_THREADS
     event_base_loop(self->base, flags);
     Py_END_ALLOW_THREADS
-    return base_evalute_error_response(self);
+    return pybase_evalute_error_response(self);
 }
 
-PyDoc_STRVAR(base_loopexit_doc, "Exit the event loop after the specified time (threadsafe variant).");
+PyDoc_STRVAR(pybase_loopexit_doc, "Exit the event loop after the specified time (threadsafe variant).");
 
 static PyObject *
-base_loopexit(PyBaseObject *self, PyObject *args)
+pybase_loopexit(PyEventBaseObject *self, PyObject *args)
 {
     double duration;
     struct timeval tv;
@@ -161,10 +161,10 @@ base_loopexit(PyBaseObject *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
-PyDoc_STRVAR(base_loopbreak_doc, "Abort the active loop() immediately.");
+PyDoc_STRVAR(pybase_loopbreak_doc, "Abort the active loop() immediately.");
 
 static PyObject *
-base_loopbreak(PyBaseObject *self, PyObject *args)
+pybase_loopbreak(PyEventBaseObject *self, PyObject *args)
 {
     Py_BEGIN_ALLOW_THREADS
     event_base_loopbreak(self->base);
@@ -172,10 +172,10 @@ base_loopbreak(PyBaseObject *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
-PyDoc_STRVAR(base_got_exit_doc, "Checks if the event loop was told to exit by loopexit().");
+PyDoc_STRVAR(pybase_got_exit_doc, "Checks if the event loop was told to exit by loopexit().");
 
 static PyObject *
-base_got_exit(PyBaseObject *self, PyObject *args)
+pybase_got_exit(PyEventBaseObject *self, PyObject *args)
 {
     int result;
     Py_BEGIN_ALLOW_THREADS
@@ -184,10 +184,10 @@ base_got_exit(PyBaseObject *self, PyObject *args)
     return PyBool_FromLong(result);
 }
 
-PyDoc_STRVAR(base_got_break_doc, "Checks if the event loop was told to abort immediately by loopbreak().");
+PyDoc_STRVAR(pybase_got_break_doc, "Checks if the event loop was told to abort immediately by loopbreak().");
 
 static PyObject *
-base_got_break(PyBaseObject *self, PyObject *args)
+pybase_got_break(PyEventBaseObject *self, PyObject *args)
 {
     int result;
     Py_BEGIN_ALLOW_THREADS
@@ -196,10 +196,10 @@ base_got_break(PyBaseObject *self, PyObject *args)
     return PyBool_FromLong(result);
 }
 
-PyDoc_STRVAR(base_priority_init_doc, "Set the number of different event priorities (threadsafe variant).");
+PyDoc_STRVAR(pybase_priority_init_doc, "Set the number of different event priorities (threadsafe variant).");
 
 static PyObject *
-base_priority_init(PyBaseObject *self, PyObject *args)
+pybase_priority_init(PyEventBaseObject *self, PyObject *args)
 {
     int priorities;
     if (!PyArg_ParseTuple(args, "i", &priorities))
@@ -212,35 +212,35 @@ base_priority_init(PyBaseObject *self, PyObject *args)
 }
 
 static PyMethodDef
-base_methods[] = {
-    {"reinit", (PyCFunction)base_reinit, METH_NOARGS, base_reinit_doc},
-    {"dispatch", (PyCFunction)base_dispatch, METH_NOARGS, base_dispatch_doc},
-    {"loop", (PyCFunction)base_loop, METH_VARARGS, base_loop_doc},
-    {"loopexit", (PyCFunction)base_loopexit, METH_VARARGS, base_loopexit_doc},
-    {"loopbreak", (PyCFunction)base_loopbreak, METH_NOARGS, base_loopbreak_doc},
-    {"got_exit", (PyCFunction)base_got_exit, METH_NOARGS, base_got_exit_doc},
-    {"got_break", (PyCFunction)base_got_break, METH_NOARGS, base_got_break_doc},
-    {"priority_init", (PyCFunction)base_priority_init, METH_VARARGS, base_priority_init_doc},
+pybase_methods[] = {
+    {"reinit", (PyCFunction)pybase_reinit, METH_NOARGS, pybase_reinit_doc},
+    {"dispatch", (PyCFunction)pybase_dispatch, METH_NOARGS, pybase_dispatch_doc},
+    {"loop", (PyCFunction)pybase_loop, METH_VARARGS, pybase_loop_doc},
+    {"loopexit", (PyCFunction)pybase_loopexit, METH_VARARGS, pybase_loopexit_doc},
+    {"loopbreak", (PyCFunction)pybase_loopbreak, METH_NOARGS, pybase_loopbreak_doc},
+    {"got_exit", (PyCFunction)pybase_got_exit, METH_NOARGS, pybase_got_exit_doc},
+    {"got_break", (PyCFunction)pybase_got_break, METH_NOARGS, pybase_got_break_doc},
+    {"priority_init", (PyCFunction)pybase_priority_init, METH_VARARGS, pybase_priority_init_doc},
     {NULL, NULL},
 };
 
 static PyMemberDef
-base_members[] = {
-    {"method", T_OBJECT, offsetof(PyBaseObject, method), READONLY, "kernel event notification mechanism"},
-    {"features", T_INT, offsetof(PyBaseObject, features), READONLY, "bitmask of the features implemented"},
+pybase_members[] = {
+    {"method", T_OBJECT, offsetof(PyEventBaseObject, method), READONLY, "kernel event notification mechanism"},
+    {"features", T_INT, offsetof(PyEventBaseObject, features), READONLY, "bitmask of the features implemented"},
     {NULL}
 };
 
-PyDoc_STRVAR(base_doc, "Event base");
+PyDoc_STRVAR(pybase_doc, "Event base");
 
 PyTypeObject
-PyBase_Type = {
+PyEventBase_Type = {
     PyObject_HEAD_INIT(NULL)
     0,                    /* tp_internal */
     "event.Base",         /* tp_name */
-    sizeof(PyBaseObject), /* tp_basicsize */
+    sizeof(PyEventBaseObject), /* tp_basicsize */
     0,                    /* tp_itemsize */
-    (destructor)base_dealloc, /* tp_dealloc */
+    (destructor)pybase_dealloc, /* tp_dealloc */
     0,                    /* tp_print */
     0,                    /* tp_getattr */
     0,                    /* tp_setattr */
@@ -256,23 +256,23 @@ PyBase_Type = {
     0,                    /* tp_setattro */
     0,                    /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT,   /* tp_flags */
-    base_doc,             /* tp_doc */
+    pybase_doc,           /* tp_doc */
     0,                    /* tp_traverse */
     0,                    /* tp_clear */
     0,                    /* tp_richcompare */
     0,                    /* tp_weaklistoffset */
     0,                    /* tp_iter */
     0,                    /* tp_iternext */
-    base_methods,         /* tp_methods */
-    base_members,         /* tp_members */
+    pybase_methods,       /* tp_methods */
+    pybase_members,       /* tp_members */
     0,                    /* tp_getset */
     0,                    /* tp_base */
     0,                    /* tp_dict */
     0,                    /* tp_descr_get */
     0,                    /* tp_descr_set */
     0,                    /* tp_dictoffset */
-    (initproc)base_init,  /* tp_init */
+    (initproc)pybase_init,  /* tp_init */
     0,                    /* tp_alloc */
-    base_new,             /* tp_new */
+    pybase_new,           /* tp_new */
     0,                    /* tp_free */
 };

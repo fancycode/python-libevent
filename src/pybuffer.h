@@ -24,7 +24,7 @@
 typedef struct _PyBufferObject {
     PyObject_HEAD
     struct evbuffer *buffer;
-    PyBaseObject *base;
+    PyEventBaseObject *base;
     int owned;
 } PyBufferObject;
 

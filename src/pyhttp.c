@@ -31,7 +31,7 @@
 typedef struct _PyHttpServerObject {
     PyObject_HEAD
     struct evhttp *http;
-    PyBaseObject *base;
+    PyEventBaseObject *base;
     PyObject *callbacks;
 } PyHttpServerObject;
 
@@ -125,8 +125,8 @@ pyhttp_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static int
 pyhttp_init(PyHttpServerObject *self, PyObject *args, PyObject *kwds)
 {
-    PyBaseObject *base;
-    if (!PyArg_ParseTuple(args, "O!", &PyBase_Type, &base))
+    PyEventBaseObject *base;
+    if (!PyArg_ParseTuple(args, "O!", &PyEventBase_Type, &base))
         return -1;
 
     self->http = evhttp_new(base->base);
@@ -262,11 +262,11 @@ _pyhttp_invoke_callback(struct evhttp_request *req, void *userdata)
     START_BLOCK_THREADS
     PyHttpRequestObject *request = _pyhttp_new_request(cb->http, req);
     if (request == NULL) {
-        base_store_error(cb->http->base);
+        pybase_store_error(cb->http->base);
     } else {
         PyObject *result = PyObject_CallFunction(cb->callback, "OOO", cb->http, request, cb->userdata);
         if (result == NULL) {
-            base_store_error(cb->http->base);
+            pybase_store_error(cb->http->base);
         } else {
             Py_DECREF(result);
         }

@@ -94,8 +94,8 @@ init_libevent(void)
 #endif
 #endif
 
-    PyBase_Type.tp_new = PyType_GenericNew;
-    if (PyType_Ready(&PyBase_Type) < 0)
+    PyEventBase_Type.tp_new = PyType_GenericNew;
+    if (PyType_Ready(&PyEventBase_Type) < 0)
         return;
 
     PyEvent_Type.tp_new = PyType_GenericNew;
@@ -149,8 +149,8 @@ init_libevent(void)
 
     PyModule_AddObject(m, "METHODS", base_methods);
 
-    Py_INCREF(&PyBase_Type);
-    PyModule_AddObject(m, "Base", (PyObject *)&PyBase_Type);
+    Py_INCREF(&PyEventBase_Type);
+    PyModule_AddObject(m, "Base", (PyObject *)&PyEventBase_Type);
     Py_INCREF(&PyEvent_Type);
     PyModule_AddObject(m, "Event", (PyObject *)&PyEvent_Type);
     Py_INCREF(&PyEventBuffer_Type);

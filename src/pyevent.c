@@ -28,7 +28,7 @@
 
 typedef struct _PyEventObject {
     PyObject_HEAD
-    PyBaseObject *base;
+    PyEventBaseObject *base;
     struct event *event;
     PyObject *callback;
     PyObject *userdata;
@@ -43,7 +43,7 @@ pyevent_callback(evutil_socket_t fd, short what, void *userdata)
     START_BLOCK_THREADS
     PyObject *result = PyObject_CallFunction(self->callback, "OiiO", self, fd, what, self->userdata);
     if (result == NULL) {
-        base_store_error(self->base);
+        pybase_store_error(self->base);
     } else {
         Py_DECREF(result);
     }
@@ -67,12 +67,12 @@ pyevent_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static int
 pyevent_init(PyEventObject *self, PyObject *args, PyObject *kwds)
 {
-    PyBaseObject *base;
+    PyEventBaseObject *base;
     int fd;
     int event;
     PyObject *callback;
     PyObject *userdata = Py_None;
-    if (!PyArg_ParseTuple(args, "O!iiO|O", &PyBase_Type, &base, &fd, &event, &callback, &userdata))
+    if (!PyArg_ParseTuple(args, "O!iiO|O", &PyEventBase_Type, &base, &fd, &event, &callback, &userdata))
         return -1;
 
     if (!PyCallable_Check(callback)) {

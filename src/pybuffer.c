@@ -541,7 +541,7 @@ pybuffer_defer_callbacks(PyBufferObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "O", &base))
         return NULL;
     
-    if (base != Py_None && !PyBase_Check(base)) {
+    if (base != Py_None && !PyEventBase_Check(base)) {
         PyErr_Format(PyExc_TypeError, "expected None or a base but got a %s", base->ob_type->tp_name);
         return NULL;
     }
@@ -550,14 +550,14 @@ pybuffer_defer_callbacks(PyBufferObject *self, PyObject *args)
     if (base == Py_None) {
         evbuffer_defer_callbacks(self->buffer, NULL);
     } else {
-        evbuffer_defer_callbacks(self->buffer, ((PyBaseObject *) base)->base);
+        evbuffer_defer_callbacks(self->buffer, ((PyEventBaseObject *) base)->base);
     }
     Py_END_ALLOW_THREADS
     Py_XDECREF(self->base);
     if (base == Py_None) {
         self->base = NULL;
     } else {
-        self->base = (PyBaseObject *) base;
+        self->base = (PyEventBaseObject *) base;
         Py_INCREF(self->base);
     }
     Py_RETURN_NONE;

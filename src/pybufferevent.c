@@ -41,7 +41,7 @@ typedef struct _PyBucketConfigObject {
 typedef struct _PyBufferEventObject {
     PyObject_HEAD
     struct bufferevent *buffer;
-    PyBaseObject *base;
+    PyEventBaseObject *base;
     PyBufferObject *input;
     PyBufferObject *output;
     PyBucketConfigObject *bucket;
@@ -60,7 +60,7 @@ _pybufferevent_readcb(struct bufferevent *bev, void *ctx)
         START_BLOCK_THREADS
         PyObject *result = PyObject_CallFunction(self->readcb, "OO", self, self->cbdata);
         if (result == NULL) {
-            base_store_error(self->base);
+            pybase_store_error(self->base);
         } else {
             Py_DECREF(result);
         }
@@ -76,7 +76,7 @@ _pybufferevent_writecb(struct bufferevent *bev, void *ctx)
         START_BLOCK_THREADS
         PyObject *result = PyObject_CallFunction(self->writecb, "OO", self, self->cbdata);
         if (result == NULL) {
-            base_store_error(self->base);
+            pybase_store_error(self->base);
         } else {
             Py_DECREF(result);
         }
@@ -92,7 +92,7 @@ _pybufferevent_eventcb(struct bufferevent *bev, short what, void *ctx)
         START_BLOCK_THREADS
         PyObject *result = PyObject_CallFunction(self->eventcb, "OiO", self, what, self->cbdata);
         if (result == NULL) {
-            base_store_error(self->base);
+            pybase_store_error(self->base);
         } else {
             Py_DECREF(result);
         }
@@ -123,11 +123,11 @@ pybufferevent_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static int
 pybufferevent_init(PyBufferEventObject *self, PyObject *args, PyObject *kwds)
 {
-    PyBaseObject *base;
+    PyEventBaseObject *base;
     int fd=-1;
     int options=0;
     
-    if (!PyArg_ParseTuple(args, "O!|ii", &PyBase_Type, &base, &fd, &options))
+    if (!PyArg_ParseTuple(args, "O!|ii", &PyEventBase_Type, &base, &fd, &options))
         return -1;
 
     self->buffer = bufferevent_socket_new(base->base, fd, options);
