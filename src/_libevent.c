@@ -175,6 +175,7 @@ init_libevent(void)
     PyModule_AddIntMacro(m, EVENT_BASE_FLAG_IGNORE_ENV);
     PyModule_AddIntMacro(m, EVENT_BASE_FLAG_STARTUP_IOCP);
     PyModule_AddIntMacro(m, EVENT_BASE_FLAG_NO_CACHE_TIME);
+    PyModule_AddIntMacro(m, EVENT_BASE_FLAG_EPOLL_USE_CHANGELIST);
 
     PyModule_AddIntMacro(m, EVLOOP_ONCE);
     PyModule_AddIntMacro(m, EVLOOP_NONBLOCK);
