@@ -56,21 +56,12 @@ _pybuffer_create(struct evbuffer *buffer)
 static int
 pybuffer_init(PyBufferObject *self, PyObject *args, PyObject *kwds)
 {
-    int locking=0;
-    if (!PyArg_ParseTuple(args, "|i", &locking))
-        return -1;
-
     self->buffer = evbuffer_new();
     if (self->buffer == NULL) {
         PyErr_NoMemory();
         return -1;
     }
     
-    if (locking) {
-#if defined(WITH_THREAD)
-        evbuffer_enable_locking(self->buffer, NULL);
-#endif
-    }
     self->owned = 1;
     return 0;
 }
@@ -85,6 +76,19 @@ pybuffer_dealloc(PyBufferObject *self)
     Py_END_ALLOW_THREADS
     Py_XDECREF(self->base);
     Py_TYPE(self)->tp_free(self);
+}
+
+PyDoc_STRVAR(buffer_enable_locking_doc, "Enable locking on an evbuffer.");
+
+static PyObject *
+pybuffer_enable_locking(PyBufferObject *self, PyObject *args)
+{
+#if defined(WITH_THREAD)
+    Py_BEGIN_ALLOW_THREADS
+    evbuffer_enable_locking(self->buffer, NULL);
+    Py_END_ALLOW_THREADS
+#endif
+    Py_RETURN_NONE;
 }
 
 PyDoc_STRVAR(buffer_lock_doc, "Acquire the lock on an evbuffer.");
@@ -254,20 +258,45 @@ pybuffer_copyout(PyBufferObject *self, PyObject *args)
 {
     char *data;
     ev_ssize_t size;
-    Py_ssize_t length;
+    Py_ssize_t length=-1;
     PyObject *result;
+    int unlock=0;
     
-    if (!PyArg_ParseTuple(args, "n", &length))
+    if (!PyArg_ParseTuple(args, "|n", &length))
         return NULL;
+    
+    if (length == -1) {
+        Py_BEGIN_ALLOW_THREADS
+        evbuffer_lock(self->buffer);
+        length = evbuffer_get_length(self->buffer);
+        if (length == 0) {
+            evbuffer_unlock(self->buffer);
+        } else {
+            unlock = 1;
+        }
+        Py_END_ALLOW_THREADS
+    }
+    
+    if (length == 0) {
+        return PyString_FromString("");
+    }
     
     result = PyString_FromStringAndSize(NULL, length);
     if (result == NULL) {
+        if (unlock) {
+            Py_BEGIN_ALLOW_THREADS
+            evbuffer_unlock(self->buffer);
+            Py_END_ALLOW_THREADS
+        }
         return PyErr_NoMemory();
     }
     
     data = PyString_AS_STRING(result);
     Py_BEGIN_ALLOW_THREADS
     size = evbuffer_copyout(self->buffer, data, length);
+    if (unlock) {
+        evbuffer_unlock(self->buffer);
+    }
     Py_END_ALLOW_THREADS
     if (size < 0) {
         Py_DECREF(result);
@@ -562,6 +591,7 @@ pybuffer_search(PyBufferObject *self, PyObject *args)
 
 static PyMethodDef
 pybuffer_methods[] = {
+    {"enable_locking", (PyCFunction)pybuffer_enable_locking, METH_NOARGS, buffer_enable_locking_doc},
     {"lock", (PyCFunction)pybuffer_lock, METH_NOARGS, buffer_lock_doc},
     {"unlock", (PyCFunction)pybuffer_unlock, METH_NOARGS, buffer_unlock_doc},
     {"__enter__", (PyCFunction)pybuffer_lock, METH_VARARGS, buffer_lock_doc},
