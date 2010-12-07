@@ -47,11 +47,15 @@ typedef struct _PyBaseObject {
     struct event_base *base;
     PyObject *method;
     int features;
+    PyObject *error_type;
+    PyObject *error_value;
+    PyObject *error_traceback;
 } PyBaseObject;
 
 extern PyTypeObject PyBase_Type;
 
 extern void timeval_init(struct timeval *tv, double time);
+extern void base_store_error(PyBaseObject *self);
 
 #define PyBase_Check(ob) ((ob)->ob_type == &PyBase_Type)
 

@@ -33,6 +33,33 @@ timeval_init(struct timeval *tv, double time)
     tv->tv_usec = (suseconds_t) ((time - tv->tv_sec) * 1000000);
 }
 
+void
+base_store_error(PyBaseObject *self)
+{
+    if (self->error_type == NULL) {
+        // Store exception for later reuse and signal loop to stop
+        PyErr_Fetch(&self->error_type, &self->error_value, &self->error_traceback);
+        Py_BEGIN_ALLOW_THREADS
+        event_base_loopbreak(self->base);
+        Py_END_ALLOW_THREADS
+    }
+}
+
+static PyObject *
+base_evalute_error_response(PyBaseObject *self)
+{
+    if (self->error_type != NULL) {
+        // The loop was interrupted due to an error, re-raise
+        PyErr_Restore(self->error_type, self->error_value, self->error_traceback);
+        self->error_type = NULL;
+        self->error_value = NULL;
+        self->error_traceback = NULL;
+        return NULL;
+    }
+    
+    Py_RETURN_NONE;
+}
+
 static PyObject *
 base_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
@@ -42,6 +69,9 @@ base_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         s->base = NULL;
         s->method = NULL;
         s->features = 0;
+        s->error_type = NULL;
+        s->error_value = NULL;
+        s->error_traceback = NULL;
     }
     return (PyObject *)s;
 }
@@ -65,6 +95,9 @@ base_init(PyBaseObject *self, PyObject *args, PyObject *kwds)
 static void
 base_dealloc(PyBaseObject *self)
 {
+    Py_XDECREF(self->error_type);
+    Py_XDECREF(self->error_value);
+    Py_XDECREF(self->error_traceback);
     Py_DECREF(self->method);
     if (self->base != NULL) {
         Py_BEGIN_ALLOW_THREADS
@@ -93,7 +126,7 @@ base_dispatch(PyBaseObject *self, PyObject *args)
     Py_BEGIN_ALLOW_THREADS
     event_base_dispatch(self->base);
     Py_END_ALLOW_THREADS
-    Py_RETURN_NONE;
+    return base_evalute_error_response(self);
 }
 
 PyDoc_STRVAR(base_loop_doc, "Handle events (threadsafe version).");
@@ -108,7 +141,7 @@ base_loop(PyBaseObject *self, PyObject *args)
     Py_BEGIN_ALLOW_THREADS
     event_base_loop(self->base, flags);
     Py_END_ALLOW_THREADS
-    Py_RETURN_NONE;
+    return base_evalute_error_response(self);
 }
 
 PyDoc_STRVAR(base_loopexit_doc, "Exit the event loop after the specified time (threadsafe variant).");

@@ -262,12 +262,11 @@ _pyhttp_invoke_callback(struct evhttp_request *req, void *userdata)
     START_BLOCK_THREADS
     PyHttpRequestObject *request = _pyhttp_new_request(cb->http, req);
     if (request == NULL) {
-        PyErr_Print();
-    }
-    if (request != NULL) {
+        base_store_error(cb->http->base);
+    } else {
         PyObject *result = PyObject_CallFunction(cb->callback, "OOO", cb->http, request, cb->userdata);
         if (result == NULL) {
-            PyErr_Print();
+            base_store_error(cb->http->base);
         } else {
             Py_DECREF(result);
         }

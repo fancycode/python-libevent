@@ -60,7 +60,7 @@ _pybufferevent_readcb(struct bufferevent *bev, void *ctx)
         START_BLOCK_THREADS
         PyObject *result = PyObject_CallFunction(self->readcb, "OO", self, self->cbdata);
         if (result == NULL) {
-            PyErr_Print();
+            base_store_error(self->base);
         } else {
             Py_DECREF(result);
         }
@@ -76,7 +76,7 @@ _pybufferevent_writecb(struct bufferevent *bev, void *ctx)
         START_BLOCK_THREADS
         PyObject *result = PyObject_CallFunction(self->writecb, "OO", self, self->cbdata);
         if (result == NULL) {
-            PyErr_Print();
+            base_store_error(self->base);
         } else {
             Py_DECREF(result);
         }
@@ -92,7 +92,7 @@ _pybufferevent_eventcb(struct bufferevent *bev, short what, void *ctx)
         START_BLOCK_THREADS
         PyObject *result = PyObject_CallFunction(self->eventcb, "OiO", self, what, self->cbdata);
         if (result == NULL) {
-            PyErr_Print();
+            base_store_error(self->base);
         } else {
             Py_DECREF(result);
         }
@@ -236,24 +236,28 @@ pybufferevent_setcb(PyBufferEventObject *self, PyObject *args)
     Py_END_ALLOW_THREADS
     
     if (self->readcb != readcb) {
-        Py_XDECREF(self->readcb);
+        PyObject *old = self->readcb;
         self->readcb = (readcb == Py_None ? NULL : readcb);
         Py_XINCREF(self->readcb);
+        Py_XDECREF(old);
     }
     if (self->writecb != writecb) {
-        Py_XDECREF(self->writecb);
+        PyObject *old = self->writecb;
         self->writecb = (writecb == Py_None ? NULL : writecb);
         Py_XINCREF(self->writecb);
+        Py_XDECREF(old);
     }
     if (self->eventcb != eventcb) {
-        Py_XDECREF(self->eventcb);
+        PyObject *old = self->eventcb;
         self->eventcb = (eventcb == Py_None ? NULL : eventcb);
         Py_XINCREF(self->eventcb);
+        Py_XDECREF(old);
     }
     if (self->cbdata != cbdata) {
-        Py_DECREF(self->cbdata);
+        PyObject *old = self->cbdata;
         self->cbdata = cbdata;
         Py_INCREF(cbdata);
+        Py_XDECREF(old);
     }
     
     Py_BEGIN_ALLOW_THREADS

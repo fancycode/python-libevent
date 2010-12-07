@@ -43,7 +43,7 @@ pyevent_callback(evutil_socket_t fd, short what, void *userdata)
     START_BLOCK_THREADS
     PyObject *result = PyObject_CallFunction(self->callback, "OiiO", self, fd, what, self->userdata);
     if (result == NULL) {
-        PyErr_Print();
+        base_store_error(self->base);
     } else {
         Py_DECREF(result);
     }
