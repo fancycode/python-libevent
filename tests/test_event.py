@@ -12,8 +12,11 @@ import libevent
 
 class TestEventBase(unittest.TestCase):
 
-    def createBase(self):
-        return libevent.Base()
+    def createBase(self, *args):
+        return libevent.Base(*args)
+        
+    def createConfig(self):
+        return libevent.Config()
         
     def createTimer(self, *args):
         return libevent.Timer(*args)
@@ -81,6 +84,17 @@ class TestEventBase(unittest.TestCase):
             os.kill(os.getpid(), signal.SIGUSR1)
             base.loop()
             self.failUnless(evt.isSet(), 'signal did not fire')
+
+    def test_cfg_avoid_method(self):
+        self.failUnless(len(libevent.METHODS) > 1)
+        for method in libevent.METHODS:
+            all_methods = set(libevent.METHODS)
+            all_methods.remove(method)
+            cfg = self.createConfig()
+            for m in all_methods:
+                cfg.avoid_method(m)
+            base = self.createBase(cfg)
+            self.failUnlessEqual(method, base.method)
     
 def suite():
     suite = unittest.TestSuite()

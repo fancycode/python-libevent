@@ -26,6 +26,11 @@
 
 #include "pybase.h"
 
+typedef struct _PyConfigObject {
+    PyObject_HEAD
+    struct event_config *config;
+} PyConfigObject;
+
 void
 timeval_init(struct timeval *tv, double time)
 {
@@ -79,10 +84,15 @@ pybase_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 static int
 pybase_init(PyEventBaseObject *self, PyObject *args, PyObject *kwds)
 {
-    if (!PyArg_ParseTuple(args, "", args))
+    PyConfigObject *cfg=NULL;
+    if (!PyArg_ParseTuple(args, "|O!", &PyConfig_Type, &cfg))
         return -1;
 
-    self->base = event_base_new();
+    if (cfg == NULL) {
+        self->base = event_base_new();
+    } else {
+        self->base = event_base_new_with_config(cfg->config);
+    }
     if (self->base == NULL) {
         PyErr_NoMemory();
         return -1;
@@ -274,5 +284,149 @@ PyEventBase_Type = {
     (initproc)pybase_init,  /* tp_init */
     0,                    /* tp_alloc */
     pybase_new,           /* tp_new */
+    0,                    /* tp_free */
+};
+
+static PyObject *
+pyconfig_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+{
+    PyConfigObject *s = (PyConfigObject *)type->tp_alloc(type, 0);
+    if (s != NULL) {
+        s->config = NULL;
+    }
+    return (PyObject *)s;
+}
+
+static int
+pyconfig_init(PyConfigObject *self, PyObject *args, PyObject *kwds)
+{
+    if (!PyArg_ParseTuple(args, "", args))
+        return -1;
+
+    self->config = event_config_new();
+    if (self->config == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+    return 0;
+}
+
+static void
+pyconfig_dealloc(PyConfigObject *self)
+{
+    if (self->config != NULL) {
+        event_config_free(self->config);
+    }
+    Py_TYPE(self)->tp_free(self);
+}
+
+PyDoc_STRVAR(pyconfig_avoid_method_doc, "Enters an event method that should be avoided into the configuration.");
+
+static PyObject *
+pyconfig_avoid_method(PyConfigObject *self, PyObject *args)
+{
+    char *method;
+    
+    if (!PyArg_ParseTuple(args, "s", &method))
+        return NULL;
+        
+    event_config_avoid_method(self->config, method);
+    Py_RETURN_NONE;
+}
+
+PyDoc_STRVAR(pyconfig_require_features_doc, "Enters a required event method feature that the application demands.");
+
+static PyObject *
+pyconfig_require_features(PyConfigObject *self, PyObject *args)
+{
+    int features;
+    
+    if (!PyArg_ParseTuple(args, "i", &features))
+        return NULL;
+        
+    event_config_require_features(self->config, features);
+    Py_RETURN_NONE;
+}
+
+PyDoc_STRVAR(pyconfig_set_flag_doc, "Sets one or more flags to configure what parts of the eventual event_base will be initialized, and how they'll work.");
+
+static PyObject *
+pyconfig_set_flag(PyConfigObject *self, PyObject *args)
+{
+    int flag;
+    
+    if (!PyArg_ParseTuple(args, "i", &flag))
+        return NULL;
+        
+    event_config_set_flag(self->config, flag);
+    Py_RETURN_NONE;
+}
+
+PyDoc_STRVAR(pyconfig_set_num_cpus_hint_doc, "Records a hint for the number of CPUs in the system.");
+
+static PyObject *
+pyconfig_set_num_cpus_hint(PyConfigObject *self, PyObject *args)
+{
+    int cpus;
+    
+    if (!PyArg_ParseTuple(args, "i", &cpus))
+        return NULL;
+        
+    event_config_set_num_cpus_hint(self->config, cpus);
+    Py_RETURN_NONE;
+}
+
+static PyMethodDef
+pyconfig_methods[] = {
+    {"avoid_method", (PyCFunction)pyconfig_avoid_method, METH_VARARGS, pyconfig_avoid_method_doc},
+    {"require_features", (PyCFunction)pyconfig_require_features, METH_VARARGS, pyconfig_require_features_doc},
+    {"set_flag", (PyCFunction)pyconfig_set_flag, METH_VARARGS, pyconfig_set_flag_doc},
+    {"set_num_cpus_hint", (PyCFunction)pyconfig_set_num_cpus_hint, METH_VARARGS, pyconfig_set_num_cpus_hint_doc},
+    {NULL, NULL},
+};
+
+PyDoc_STRVAR(pyconfig_doc, "Configuration object");
+
+PyTypeObject
+PyConfig_Type = {
+    PyObject_HEAD_INIT(NULL)
+    0,                    /* tp_internal */
+    "event.Config",         /* tp_name */
+    sizeof(PyConfigObject), /* tp_basicsize */
+    0,                    /* tp_itemsize */
+    (destructor)pyconfig_dealloc, /* tp_dealloc */
+    0,                    /* tp_print */
+    0,                    /* tp_getattr */
+    0,                    /* tp_setattr */
+    0,                    /* tp_compare */
+    0,                    /* tp_repr */
+    0,                    /* tp_as_number */
+    0,                    /* tp_as_sequence */
+    0,                    /* tp_as_mapping */
+    0,                    /* tp_hash */
+    0,                    /* tp_call */
+    0,                    /* tp_str */
+    0,                    /* tp_getattro */
+    0,                    /* tp_setattro */
+    0,                    /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT,   /* tp_flags */
+    pyconfig_doc,         /* tp_doc */
+    0,                    /* tp_traverse */
+    0,                    /* tp_clear */
+    0,                    /* tp_richcompare */
+    0,                    /* tp_weaklistoffset */
+    0,                    /* tp_iter */
+    0,                    /* tp_iternext */
+    pyconfig_methods,     /* tp_methods */
+    pybase_members,       /* tp_members */
+    0,                    /* tp_getset */
+    0,                    /* tp_base */
+    0,                    /* tp_dict */
+    0,                    /* tp_descr_get */
+    0,                    /* tp_descr_set */
+    0,                    /* tp_dictoffset */
+    (initproc)pyconfig_init,  /* tp_init */
+    0,                    /* tp_alloc */
+    pyconfig_new,         /* tp_new */
     0,                    /* tp_free */
 };

@@ -98,6 +98,10 @@ init_libevent(void)
     if (PyType_Ready(&PyEventBase_Type) < 0)
         return;
 
+    PyConfig_Type.tp_new = PyType_GenericNew;
+    if (PyType_Ready(&PyConfig_Type) < 0)
+        return;
+
     PyEvent_Type.tp_new = PyType_GenericNew;
     if (PyType_Ready(&PyEvent_Type) < 0)
         return;
@@ -151,6 +155,8 @@ init_libevent(void)
 
     Py_INCREF(&PyEventBase_Type);
     PyModule_AddObject(m, "Base", (PyObject *)&PyEventBase_Type);
+    Py_INCREF(&PyConfig_Type);
+    PyModule_AddObject(m, "Config", (PyObject *)&PyConfig_Type);
     Py_INCREF(&PyEvent_Type);
     PyModule_AddObject(m, "Event", (PyObject *)&PyEvent_Type);
     Py_INCREF(&PyEventBuffer_Type);

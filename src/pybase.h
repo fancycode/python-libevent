@@ -53,6 +53,7 @@ typedef struct _PyEventBaseObject {
 } PyEventBaseObject;
 
 extern PyTypeObject PyEventBase_Type;
+extern PyTypeObject PyConfig_Type;
 
 extern void timeval_init(struct timeval *tv, double time);
 extern void pybase_store_error(PyEventBaseObject *self);
