@@ -36,7 +36,7 @@ if LIBEVENT_ROOT is None:
 
 descr = "Python bindings for libevent"
 modules = [
-    'event',
+    'libevent',
 ]
 c_files = [
     'src/_libevent.c',
