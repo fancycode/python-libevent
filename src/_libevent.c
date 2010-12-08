@@ -41,6 +41,9 @@
 #define PyModule_AddStringMacro(module, name)   PyModule_AddStringConstant(module, #name, name);
 #endif
 
+static PyObject *pylog_callback;
+static PyObject *pyfatal_callback;
+
 static PyObject *
 enable_debug_mode(PyObject *self, PyObject *args)
 {
@@ -65,12 +68,110 @@ socket_error_to_string(PyObject *self, PyObject *args)
     return PyString_FromString(evutil_socket_error_to_string(errorcode));
 }
 
+static void
+_pylog_callback(int severity, const char *msg)
+{
+    START_BLOCK_THREADS
+    if (pylog_callback != NULL) {
+        PyObject *result = PyObject_CallFunction(pylog_callback, "is", severity, msg);
+        if (result == NULL) {
+            PyErr_Print();
+        } else {
+            Py_DECREF(result);
+        }
+    }
+    END_BLOCK_THREADS
+}
+
+static PyObject *
+set_log_callback(PyObject *self, PyObject *args)
+{
+    PyObject *cb;
+    PyObject *tmp;
+    
+    if (!PyArg_ParseTuple(args, "O", &cb))
+        return NULL;
+    
+    if (cb != Py_None && !PyCallable_Check(cb)) {
+        PyErr_Format(PyExc_TypeError, "expected a callable or None, not %s", cb->ob_type->tp_name);
+        return NULL;
+    }
+    
+    if (cb == pylog_callback) {
+        // No change
+        Py_RETURN_NONE;
+    }
+    
+    tmp = pylog_callback;
+    pylog_callback = NULL;
+    Py_XDECREF(tmp);
+    if (cb == Py_None) {
+        event_set_log_callback(NULL);
+    } else {
+        pylog_callback = cb;
+        Py_INCREF(cb);
+        event_set_log_callback(_pylog_callback);
+    }
+    
+    Py_RETURN_NONE;
+}
+
+static void
+_pyfatal_callback(int err)
+{
+    START_BLOCK_THREADS
+    if (pyfatal_callback != NULL) {
+        PyObject *result = PyObject_CallFunction(pyfatal_callback, "i", err);
+        if (result == NULL) {
+            PyErr_Print();
+        } else {
+            Py_DECREF(result);
+        }
+    }
+    END_BLOCK_THREADS
+}
+
+static PyObject *
+set_fatal_callback(PyObject *self, PyObject *args)
+{
+    PyObject *cb;
+    PyObject *tmp;
+    
+    if (!PyArg_ParseTuple(args, "O", &cb))
+        return NULL;
+    
+    if (cb != Py_None && !PyCallable_Check(cb)) {
+        PyErr_Format(PyExc_TypeError, "expected a callable or None, not %s", cb->ob_type->tp_name);
+        return NULL;
+    }
+    
+    if (cb == pyfatal_callback) {
+        // No change
+        Py_RETURN_NONE;
+    }
+    
+    tmp = pyfatal_callback;
+    pyfatal_callback = NULL;
+    Py_XDECREF(tmp);
+    if (cb == Py_None) {
+        event_set_fatal_callback(NULL);
+    } else {
+        pyfatal_callback = cb;
+        Py_INCREF(cb);
+        event_set_fatal_callback(_pyfatal_callback);
+    }
+    
+    Py_RETURN_NONE;
+}
+
 PyMethodDef
 methods[] = {
     // exported functions
     {"enable_debug_mode", (PyCFunction)enable_debug_mode, METH_NOARGS, NULL},
     {"socket_get_error", (PyCFunction)socket_get_error, METH_NOARGS, NULL},
     {"socket_error_to_string", (PyCFunction)socket_error_to_string, METH_VARARGS, NULL},
+    {"set_log_callback", (PyCFunction)set_log_callback, METH_VARARGS, NULL},
+    {"set_fatal_callback", (PyCFunction)set_fatal_callback, METH_VARARGS, NULL},
     {NULL, NULL},
 };
 
@@ -80,6 +181,9 @@ init_libevent(void)
     PyObject *m;
     PyObject *base_methods;
     const char **evmethods;
+
+    pylog_callback = NULL;
+    pyfatal_callback = NULL;
 
 #if defined(WITH_THREAD)
     // enable thread support in Python
@@ -196,6 +300,11 @@ init_libevent(void)
     PyModule_AddStringMacro(m, LIBEVENT_VERSION);
     PyModule_AddIntMacro(m, LIBEVENT_VERSION_NUMBER);
     PyModule_AddIntMacro(m, EVENT_MAX_PRIORITIES);
+    
+    PyModule_AddIntMacro(m, _EVENT_LOG_DEBUG);
+    PyModule_AddIntMacro(m, _EVENT_LOG_MSG);
+    PyModule_AddIntMacro(m, _EVENT_LOG_WARN);
+    PyModule_AddIntMacro(m, _EVENT_LOG_ERR);
     
     // buffer.h flags
     PyModule_AddIntMacro(m, EVBUFFER_EOL_ANY);
