@@ -418,7 +418,7 @@ PyConfig_Type = {
     0,                    /* tp_iter */
     0,                    /* tp_iternext */
     pyconfig_methods,     /* tp_methods */
-    pybase_members,       /* tp_members */
+    0,                    /* tp_members */
     0,                    /* tp_getset */
     0,                    /* tp_base */
     0,                    /* tp_dict */
