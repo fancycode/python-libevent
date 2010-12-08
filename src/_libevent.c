@@ -301,10 +301,10 @@ init_libevent(void)
     PyModule_AddIntMacro(m, LIBEVENT_VERSION_NUMBER);
     PyModule_AddIntMacro(m, EVENT_MAX_PRIORITIES);
     
-    PyModule_AddIntMacro(m, _EVENT_LOG_DEBUG);
-    PyModule_AddIntMacro(m, _EVENT_LOG_MSG);
-    PyModule_AddIntMacro(m, _EVENT_LOG_WARN);
-    PyModule_AddIntMacro(m, _EVENT_LOG_ERR);
+    PyModule_AddIntConstant(m, "EVENT_LOG_DEBUG", _EVENT_LOG_DEBUG);
+    PyModule_AddIntConstant(m, "EVENT_LOG_MSG", _EVENT_LOG_MSG);
+    PyModule_AddIntConstant(m, "EVENT_LOG_WARN", _EVENT_LOG_WARN);
+    PyModule_AddIntConstant(m, "EVENT_LOG_ERR", _EVENT_LOG_ERR);
     
     // buffer.h flags
     PyModule_AddIntMacro(m, EVBUFFER_EOL_ANY);
