@@ -45,6 +45,7 @@ c_files = [
     'src/pybufferevent.c',
     'src/pyevent.c',
     'src/pyhttp.c',
+    'src/pylistener.c',
 ]
 include_dirs = [
     os.path.join(LIBEVENT_ROOT, 'include'),

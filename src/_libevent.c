@@ -24,6 +24,7 @@
 #include <event2/buffer.h>
 #include <event2/bufferevent.h>
 #include <event2/http.h>
+#include <event2/listener.h>
 #if defined(WITH_THREAD)
 #include <event2/thread.h>
 #endif
@@ -33,6 +34,7 @@
 #include "pybuffer.h"
 #include "pybufferevent.h"
 #include "pyhttp.h"
+#include "pylistener.h"
 
 #if !defined(PyModule_AddIntMacro)
 #define PyModule_AddIntMacro(module, name)      PyModule_AddIntConstant(module, #name, name);
@@ -238,6 +240,10 @@ init_libevent(void)
     if (PyType_Ready(&PyHttpRequest_Type) < 0)
         return;
 
+    PyListener_Type.tp_new = PyType_GenericNew;
+    if (PyType_Ready(&PyListener_Type) < 0)
+        return;
+
     base_methods = PyTuple_New(0);
     if (base_methods == NULL) {
         return;
@@ -275,6 +281,8 @@ init_libevent(void)
     PyModule_AddObject(m, "BoundSocket", (PyObject *)&PyBoundSocket_Type);
     Py_INCREF(&PyHttpRequest_Type);
     PyModule_AddObject(m, "HttpRequest", (PyObject *)&PyHttpRequest_Type);
+    Py_INCREF(&PyListener_Type);
+    PyModule_AddObject(m, "Listener", (PyObject *)&PyListener_Type);
 
     // event.h flags
     PyModule_AddIntMacro(m, EV_FEATURE_ET);
@@ -354,4 +362,10 @@ init_libevent(void)
     PyModule_AddIntMacro(m, EVHTTP_REQ_CONNECT);
     PyModule_AddIntMacro(m, EVHTTP_REQ_PATCH);
 
+    // listener.h flags
+    PyModule_AddIntMacro(m, LEV_OPT_LEAVE_SOCKETS_BLOCKING);
+    PyModule_AddIntMacro(m, LEV_OPT_CLOSE_ON_FREE);
+    PyModule_AddIntMacro(m, LEV_OPT_CLOSE_ON_EXEC);
+    PyModule_AddIntMacro(m, LEV_OPT_REUSEABLE);
+    PyModule_AddIntMacro(m, LEV_OPT_THREADSAFE);
 }
