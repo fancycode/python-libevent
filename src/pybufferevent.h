@@ -1,7 +1,7 @@
 /*
  * Python Bindings for libevent
  *
- * Copyright (c) 2010 by Joachim Bauch, mail@joachim-bauch.de
+ * Copyright (c) 2010-2011 by Joachim Bauch, mail@joachim-bauch.de
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
