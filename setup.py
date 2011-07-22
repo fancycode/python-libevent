@@ -32,7 +32,9 @@ import version
 
 LIBEVENT_ROOT = os.environ.get('LIBEVENT_ROOT')
 if LIBEVENT_ROOT is None:
-    raise TypeError('Please set the environment variable LIBEVENT_ROOT to the path of your libevent root directory')
+    raise TypeError('Please set the environment variable LIBEVENT_ROOT ' \
+        'to the path of your libevent root directory and make sure ' \
+        'to pass "--with-pic" to configure when building it')
 
 descr = "Python bindings for libevent"
 modules = [
@@ -51,17 +53,23 @@ include_dirs = [
     os.path.join(LIBEVENT_ROOT, 'include'),
 ]
 library_dirs = [
-    os.path.join(LIBEVENT_ROOT, '.libs'),
 ]
 libraries = [
-    'event'
+]
+extra_link_args = [
+    os.path.join(LIBEVENT_ROOT, '.libs', 'libevent.a'),
 ]
 if os.name == 'posix':
     # enable thread support
-    libraries.append('event_pthreads')
+    extra_link_args.extend([
+        os.path.join(LIBEVENT_ROOT, '.libs', 'libevent_pthreads.a'),
+    ])
+    libraries.append('rt')
+    libraries.append('pthread')
 extens = [
     Extension('_libevent', c_files, libraries=libraries,
-        include_dirs=include_dirs, library_dirs=library_dirs),
+        include_dirs=include_dirs, library_dirs=library_dirs,
+        extra_link_args=extra_link_args),
 ]
 
 setup(
