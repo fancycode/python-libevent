@@ -31,6 +31,7 @@ class TestBuffer(unittest.TestCase):
         buf.add('34')
         self.failUnlessEqual(buf.copyout(2), '12')
         self.failUnlessEqual(buf.copyout(4), '1234')
+        self.failUnlessRaises(TypeError, buf.copyout, -2)
 
     def test_add_buffer(self):
         buf1 = self.createBuffer()
