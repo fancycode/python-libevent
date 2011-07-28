@@ -23,6 +23,7 @@ class TestBuffer(unittest.TestCase):
         self.failUnless('1234' in buf)
         self.failUnlessEqual(buf.remove(4), '1234')
         self.failUnlessEqual(len(buf), 0)
+        self.failUnlessRaises(TypeError, buf.remove, -2)
 
     def test_add_copyout(self):
         buf = self.createBuffer()

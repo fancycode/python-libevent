@@ -215,6 +215,9 @@ pybuffer_remove(PyBufferObject *self, PyObject *args)
             unlock = 1;
         }
         Py_END_ALLOW_THREADS
+    } else if (length < 0) {
+        PyErr_Format(PyExc_TypeError, "can't read %d bytes from the buffer", length);
+        return NULL;
     }
     
     if (length == 0) {
