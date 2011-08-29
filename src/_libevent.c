@@ -56,7 +56,12 @@ enable_debug_mode(PyObject *self, PyObject *args)
 static PyObject *
 socket_get_error(PyObject *self, PyObject *args)
 {
-    return PyInt_FromLong(evutil_socket_geterror());
+    evutil_socket_t sock;
+    
+    if (!PyArg_ParseTuple(args, "i", &sock))
+        return NULL;
+    
+    return PyInt_FromLong(evutil_socket_geterror(sock));
 }
 
 static PyObject *
@@ -170,7 +175,7 @@ PyMethodDef
 methods[] = {
     // exported functions
     {"enable_debug_mode", (PyCFunction)enable_debug_mode, METH_NOARGS, NULL},
-    {"socket_get_error", (PyCFunction)socket_get_error, METH_NOARGS, NULL},
+    {"socket_get_error", (PyCFunction)socket_get_error, METH_VARARGS, NULL},
     {"socket_error_to_string", (PyCFunction)socket_error_to_string, METH_VARARGS, NULL},
     {"set_log_callback", (PyCFunction)set_log_callback, METH_VARARGS, NULL},
     {"set_fatal_callback", (PyCFunction)set_fatal_callback, METH_VARARGS, NULL},
