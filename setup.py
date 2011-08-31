@@ -57,15 +57,23 @@ library_dirs = [
 libraries = [
 ]
 extra_link_args = [
-    os.path.join(LIBEVENT_ROOT, '.libs', 'libevent.a'),
 ]
 if os.name == 'posix':
     # enable thread support
     extra_link_args.extend([
+        os.path.join(LIBEVENT_ROOT, '.libs', 'libevent.a'),
         os.path.join(LIBEVENT_ROOT, '.libs', 'libevent_pthreads.a'),
     ])
     libraries.append('rt')
     libraries.append('pthread')
+elif os.name == 'nt':
+    # enable thread support
+    extra_link_args.extend([
+        os.path.join(LIBEVENT_ROOT,  'libevent.lib'),
+    ])    
+    libraries.append('ws2_32')
+    libraries.append('Advapi32')
+    
 extens = [
     Extension('_libevent', c_files, libraries=libraries,
         include_dirs=include_dirs, library_dirs=library_dirs,

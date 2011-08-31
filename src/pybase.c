@@ -26,6 +26,10 @@
 
 #include "pybase.h"
 
+#ifdef WIN32
+  #define suseconds_t long
+#endif
+
 typedef struct _PyConfigObject {
     PyObject_HEAD
     struct event_config *config;

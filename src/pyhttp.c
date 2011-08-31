@@ -655,11 +655,12 @@ pyhttp_request_send_reply(PyHttpRequestObject *self, PyObject *args)
         evhttp_send_reply(self->request, code, reason, ((PyBufferObject *) data)->buffer);
         Py_END_ALLOW_THREADS
     } else {
+        struct evbuffer *buffer = NULL;
         if (PyObject_AsReadBuffer(pydata, (const void **) &data, &length) != 0) {
             return NULL;
         }
         
-        struct evbuffer *buffer = evbuffer_new();
+        buffer = evbuffer_new();
         if (buffer == NULL) {
             return PyErr_NoMemory();
         }
@@ -718,11 +719,12 @@ pyhttp_request_send_reply_chunk(PyHttpRequestObject *self, PyObject *args)
         evhttp_send_reply_chunk(self->request, ((PyBufferObject *) data)->buffer);
         Py_END_ALLOW_THREADS
     } else {
+        struct evbuffer *buffer;
         if (PyObject_AsReadBuffer(pydata, (const void **) &data, &length) != 0) {
             return NULL;
         }
         
-        struct evbuffer *buffer = evbuffer_new();
+        buffer = evbuffer_new();
         if (buffer == NULL) {
             return PyErr_NoMemory();
         }
