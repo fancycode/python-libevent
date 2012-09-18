@@ -63,6 +63,8 @@ if os.name == 'posix':
     extra_link_args.extend([
         os.path.join(LIBEVENT_ROOT, '.libs', 'libevent.a'),
         os.path.join(LIBEVENT_ROOT, '.libs', 'libevent_pthreads.a'),
+	'-lrt',
+	'-lpthread',
     ])
     libraries.append('rt')
     libraries.append('pthread')
